@@ -192,7 +192,7 @@ public class BoundingBoxVisualizer : MonoBehaviour {
         {
             mf.mesh.RecalculateBounds();
             Bounds b = mf.mesh.bounds;
-            b.center = go.transform.position;
+            b.center += go.transform.position;
             return b;
         }
         else
