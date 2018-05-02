@@ -34,7 +34,7 @@ public class BoundingBoxVisualizer : MonoBehaviour {
     public void VisualizeGameObjectBounds()
     {
         Bounds b = GetBoundsFor(MeshObjectToDisplayBoundsFor);
-        BoundCorners corners = CalculateCorners(b);
+        BoundCorners corners = CalculateCorners(b, MeshObjectToDisplayBoundsFor);
         VisualizeBox(corners);
         //VisualizeBoxWithRays(corners);
     }
@@ -53,7 +53,7 @@ public class BoundingBoxVisualizer : MonoBehaviour {
     #endregion
 
     #region Logic
-    public BoundCorners CalculateCorners(Bounds bounds)
+    public BoundCorners CalculateCorners(Bounds bounds, GameObject go)
     {
         Vector3 cornerMin = bounds.min; // Front, Bottom, Left
         Vector3 cornerFTL = bounds.center + new Vector3(-bounds.extents.x, bounds.extents.y, -bounds.extents.z); // Front, Top, Left
@@ -63,6 +63,18 @@ public class BoundingBoxVisualizer : MonoBehaviour {
         Vector3 cornerBTL = bounds.center + new Vector3(-bounds.extents.x, bounds.extents.y, bounds.extents.z); // Back, Top, Left
         Vector3 cornerMax = bounds.max; // Back, Top, Right
         Vector3 cornerBBR = bounds.center + new Vector3(bounds.extents.x, -bounds.extents.y, bounds.extents.z); // Back, Bottom, Right
+
+        if(go != null)
+        {
+            cornerMin = RotateBoundingBoxPoint(cornerMin, go);
+            cornerFTL = RotateBoundingBoxPoint(cornerFTL, go);
+            cornerFTR = RotateBoundingBoxPoint(cornerFTR, go);
+            cornerFBR = RotateBoundingBoxPoint(cornerFBR, go);
+            cornerBBL = RotateBoundingBoxPoint(cornerBBL, go);
+            cornerBTL = RotateBoundingBoxPoint(cornerBTL, go);
+            cornerMax = RotateBoundingBoxPoint(cornerMax, go);
+            cornerBBR = RotateBoundingBoxPoint(cornerBBR, go);
+        }
 
         BoundCorners corners = new BoundCorners(cornerMin, cornerFTL, cornerFTR, cornerFBR, cornerBBL, cornerBTL, cornerMax, cornerBBR);
 
@@ -168,7 +180,7 @@ public class BoundingBoxVisualizer : MonoBehaviour {
         Vector3 size = max - min;
         Bounds b = new Bounds(center, size);
 
-        BoundCorners corners = CalculateCorners(b);
+        BoundCorners corners = CalculateCorners(b, null);
         return corners;
     }
 
@@ -178,7 +190,7 @@ public class BoundingBoxVisualizer : MonoBehaviour {
 
         if(mf != null)
         {
-            //mf.mesh.RecalculateBounds();
+            mf.mesh.RecalculateBounds();
             Bounds b = mf.mesh.bounds;
             b.center = go.transform.position;
             return b;
@@ -192,7 +204,7 @@ public class BoundingBoxVisualizer : MonoBehaviour {
 
     public bool IsGoContainedInMinMaxCalc()
     {
-        BoundCorners goCorners = CalculateCorners(GetBoundsFor(MeshObjectToDisplayBoundsFor));
+        BoundCorners goCorners = CalculateCorners(GetBoundsFor(MeshObjectToDisplayBoundsFor), MeshObjectToDisplayBoundsFor);
         BoundCorners minMaxCorners = CalculateCorners(MinAndMax[0], MinAndMax[1]);
 
         bool fbl = IsLesserThanPoint(goCorners.FrontBottomLeft, MinAndMax[0]) && IsGreaterThanPoint(goCorners.FrontBottomLeft, MinAndMax[1]);
@@ -253,6 +265,16 @@ public class BoundingBoxVisualizer : MonoBehaviour {
 
         //return (xcon <= 0) && (ycon <= 0) && (zcon <= 0);
         return (b.x <= a.x) && (b.y <= a.y) && (b.z <= a.z);
+    }
+
+    public Vector3 RotateBoundingBoxPoint(Vector3 point, GameObject go)
+    {
+        Vector3 pivot = go.transform.position;
+        Quaternion quat = go.transform.rotation;
+        Vector3 dir = point - pivot;
+
+        Vector3 rotatedDir = quat * dir;
+        return pivot + rotatedDir;
     }
     #endregion
 }
